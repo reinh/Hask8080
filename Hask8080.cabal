@@ -19,7 +19,8 @@ executable Hask8080
   main-is:             Main.hs
   other-modules:       Hask8080.ASM
   -- other-extensions:
-  build-depends:       array >= 0.5.0.0
+  build-depends:       applicative-quoters >= 0.1.0.8
+                     , array >= 0.5.0.0
                      , attoparsec >= 0.12.1.2
                      , base >=4.7 && <4.8
                      , binary >= 0.7.1.0

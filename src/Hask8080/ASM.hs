@@ -1,24 +1,14 @@
 -- |
 
 module Hask8080.ASM
-  ( Reg (..)  -- regular registers
-  , Reg16(..) -- double registers
-  , ASM(..)   -- the ASM data type
-  , Byte      -- Byte is Word8
-  , Address   -- Address is Word16
+  ( ASM(..)   -- the ASM data type
   ) where
 
 import           Control.Applicative
 import           Data.Binary.Get     (Get, getWord16le, getWord8, isEmpty)
-import           Data.Word           (Word16, Word8)
 import           Numeric             (showHex)
 
-type Byte = Word8
-type Address = Word16
-
-data Reg = PSW | A | B | C | D | E | F | H | L | M deriving (Show, Eq, Enum)
-
-data Reg16 = BC | DE | HL | SP | AF | IX | IY deriving (Show, Eq, Enum)
+import Hask8080.Types
 
 data ASM
   -- Move, load, and store
@@ -74,7 +64,7 @@ data ASM
   | RPO
 
   -- Restart
-  | RST Word8
+  | RST Byte
 
   -- Increment and decrement
   | INR Reg
