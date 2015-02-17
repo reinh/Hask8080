@@ -32,10 +32,11 @@ makeLenses ''Registers
 _Bytes :: Iso' Address (Byte,Byte)
 _Bytes = iso to' from'
   where
-    to' addr = (highByte addr, lowByte addr)
-    highByte addr = fromIntegral $ addr .&. 65280 `shiftR` 8
-    lowByte addr = fromIntegral $ addr .&. 255
-    from' (hb,lb) = (fromIntegral hb `shiftL` 8) .|. fromIntegral lb
+    to' addr = ( fromIntegral $ addr .&. 65280 `shiftR` 8
+               , fromIntegral $ addr .&. 255
+               )
+    from' (hb,lb)  =  (fromIntegral hb `shiftL` 8)
+                  .|.  fromIntegral lb
 
 mkReg16 :: Reg -> Reg -> Lens' Registers Address
 mkReg16 hr lr = lens get' set'
