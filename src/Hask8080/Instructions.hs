@@ -2,11 +2,11 @@
 
 module Hask8080.Instructions where
 
-import Control.Applicative
-import Control.Lens
+import           Control.Applicative
+import           Control.Lens
 
-import Hask8080.CPU (CPU, pc, reg, reg16, regMem)
-import Hask8080.Types (Address, Byte, Reg (..), Reg16 (..))
+import           Hask8080.CPU        (CPU, pc, reg, reg16, regMem)
+import           Hask8080.Types      (Address, Byte, Reg (..), Reg16 (..))
 
 tick n      = pc += n
 
