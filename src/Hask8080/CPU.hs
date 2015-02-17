@@ -79,7 +79,8 @@ instance HasFlag Registers where
 type Memory = V.Vector Byte
 
 data Processor = Processor
-  { _registers :: !Registers
+  { _cycles    :: !Int
+  , _registers :: !Registers
   , _memory    :: !Memory
   , _ie        :: !Bool
   , _sp        :: !Address

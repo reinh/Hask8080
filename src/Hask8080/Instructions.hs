@@ -5,10 +5,10 @@ module Hask8080.Instructions where
 import           Control.Applicative
 import           Control.Lens
 
-import           Hask8080.CPU        (CPU, pc, reg, reg16, regMem)
+import           Hask8080.CPU        (CPU, cycles, reg, reg16, regMem)
 import           Hask8080.Types      (Address, Byte, Reg (..), Reg16 (..))
 
-tick n      = pc += n
+tick n      = cycles += n
 
 mov         :: Reg -> Reg -> CPU
 mov r1 M    = tick 7  >> regMem HL <~ use (reg r1)
