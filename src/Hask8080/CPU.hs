@@ -8,10 +8,10 @@ module Hask8080.CPU where
 import           Control.Applicative
 import           Control.Lens
 import           Control.Monad.State.Strict
-import           Data.Array                 (Array)
-import           Data.Bits
+import           Data.Bits.Bitwise          (joinAt, splitAt)
 import           Data.Bits.Lens
 import qualified Data.Vector.Unboxed        as V
+import           Prelude                    hiding (splitAt)
 import           System.IO                  (Handle)
 
 import           Hask8080.Types
@@ -30,23 +30,18 @@ data Registers = Registers
 makeLenses ''Registers
 
 _Bytes :: Iso' Address (Byte,Byte)
-_Bytes = iso to' from'
-  where
-    to' addr = ( fromIntegral $ addr .&. 65280 `shiftR` 8
-               , fromIntegral $ addr .&. 255
-               )
-    from' (hb,lb)  =  (fromIntegral hb `shiftL` 8)
-                  .|.  fromIntegral lb
+_Bytes = iso (over both fromIntegral . splitAt 8)
+             (uncurry (joinAt 8) . over both fromIntegral)
 
 mkReg16 :: Reg -> Reg -> Lens' Registers Address
-mkReg16 hr lr = lens get' set'
+mkReg16 hr lr = lens get_ set_
   where
     -- construct an Address from a pair of Bytes at the given
     -- registers
-    get' rs = _Bytes # (rs ^. reg hr, rs ^. reg lr)
+    get_ rs = _Bytes # (rs ^. reg hr, rs ^. reg lr)
     -- destruct an Address into a pair of Bytes and set the given
     -- registers with the high and low bytes, respectively.
-    set' rs addr = case addr ^. _Bytes of
+    set_ rs addr = case addr ^. _Bytes of
       (hb,lb) -> rs & reg hr .~ hb & reg lr .~ lb
 
 class HasReg a where
@@ -61,6 +56,7 @@ instance HasReg Registers where
   reg E = regE
   reg H = regH
   reg L = regL
+  reg M = error "fatal: tried to access main memory as a register"
 
 data Flag = S | Z | P | Ca | AC deriving (Show, Eq)
 
@@ -91,6 +87,7 @@ data Processor = Processor
 
 makeLenses ''Processor
 
+reg16 :: Reg16 -> Lens' Processor Address
 reg16 SP = sp
 reg16 PC = pc
 reg16 rp = registers . rpl
@@ -100,12 +97,14 @@ reg16 rp = registers . rpl
       BC -> mkReg16 B C
       DE -> mkReg16 B C
       HL -> mkReg16 H L
+      SP -> error "tried to access Stack Pointer as a register pair"
+      PC -> error "tried to access Program Counter as a register pair"
 
 regMem :: Reg16 -> Lens' Processor Byte
-regMem rp = lens get' set'
+regMem rp = lens get_ set_
   where
-    get' p   = p ^?! mem (p ^. reg16 rp)
-    set' p a = p   & mem (p ^. reg16 rp) .~ a
+    get_ p   = p ^?! mem (p ^. reg16 rp)
+    set_ p a = p   & mem (p ^. reg16 rp) .~ a
 
 instance HasReg Processor where
   reg r = registers . reg r
@@ -119,7 +118,22 @@ mem addr = memory . ix (fromIntegral addr)
 newtype CPU' m a = CPU' (StateT Processor m a)
   deriving (Functor, Applicative, Monad, MonadIO, MonadState Processor)
 
-type CPU = CPU' IO ()
+type CPU a = CPU' IO a
 
-runCPU :: CPU -> Processor -> IO Processor
+runCPU :: CPU a -> Processor -> IO Processor
 runCPU (CPU' k) = execStateT k
+
+memAt :: Address -> CPU Byte
+memAt addr = fmap (V.! fromIntegral addr) (use memory)
+
+nextByte :: CPU Byte
+nextByte = memAt . succ =<< use pc
+
+nextByte2 :: CPU Byte
+nextByte2 = memAt . succ . succ =<< use pc
+
+nextBytes :: CPU (Byte,Byte)
+nextBytes = liftA2 (,) nextByte nextByte2
+
+nextAddr :: CPU Address
+nextAddr = fmap (_Bytes #) nextBytes
