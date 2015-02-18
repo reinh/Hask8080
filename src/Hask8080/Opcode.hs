@@ -1,15 +1,24 @@
 -- |
-{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE LambdaCase           #-}
+{-# LANGUAGE OverloadedLists      #-}
+{-# LANGUAGE TypeFamilies         #-}
+{-# LANGUAGE TypeSynonymInstances #-}
 {-# OPTIONS_GHC -fno-warn-incomplete-patterns #-}
 
 module Hask8080.Opcode (interpret) where
 
 import           Control.Lens          hiding (op)
 import           Data.Bits.Bitwise     (fromListBE, toListBE)
+import           GHC.Exts
 
 import           Hask8080.CPU          (CPU)
 import           Hask8080.Instructions
 import           Hask8080.Types
+
+instance IsList Byte where
+  type Item Byte = Int
+  toList = toBitList
+  fromList = fromBitList
 
 -- | Map a Bool to a bit (Int in {0,1}).
 bitToBool :: Iso' Int Bool
@@ -30,7 +39,7 @@ fromBitList = fromListBE . map (view bitToBool)
 -- | Interpret a byte as a 'CPU' instruction
 --   See: http://altairclone.com/downloads/manuals/8080%20Programmers%20Manual.pdf
 interpret :: Byte -> CPU ()
-interpret byte = case toBitList byte of
+interpret = \case
   [0,0,0,0,0,0,0,0] -> nop
   [0,1,1,1,0,1,1,0] -> hlt
   [0,1,a,b,c,e,f,g] -> mov (r a b c) (r e f g)
