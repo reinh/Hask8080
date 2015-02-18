@@ -31,10 +31,11 @@ fromBitList = fromListBE . map (view bitToBool)
 --   See: http://altairclone.com/downloads/manuals/8080%20Programmers%20Manual.pdf
 interpret :: Byte -> CPU ()
 interpret byte = case toBitList byte of
+  [0,0,0,0,0,0,0,0] -> nop
   [0,1,1,1,0,1,1,0] -> hlt
+  [0,1,a,b,c,e,f,g] -> mov (r a b c) (r e f g)
   [0,0,a,b,c,1,0,0] -> inr (r a b c)
   [0,0,a,b,c,1,0,1] -> dcr (r a b c)
-  [0,0,0,0,0,0,0,0] -> nop
   [0,1,a,b,c,e,f,g] -> mov (r a b c) (r e f g)
   [0,0,0,x,0,0,1,0] -> stax (r16' x)
   [0,0,0,x,1,0,1,0] -> ldax (r16' x)
@@ -98,7 +99,7 @@ interpret byte = case toBitList byte of
     (1,0,1) -> cpe
     (1,1,0) -> cp
     (1,1,1) -> cm
-  [1,1,0,0,1,0,0,0] -> rz
+  [1,1,0,0,1,0,0,x] -> rz
   [1,1,0,0,1,0,0,1] -> ret
   [1,1,a,b,c,0,0,0] -> case (a, b, c) of
     (0,0,0) -> rnz
@@ -109,10 +110,11 @@ interpret byte = case toBitList byte of
     (1,1,0) -> rp
     (1,1,1) -> rm
   [1,1,a,b,c,1,1,1] -> rst (fromBitList [a, b, c])
-  [1,1,1,1,1,0,1,1] -> ei
-  [1,1,1,1,0,0,1,1] -> di
-  [1,1,0,1,1,0,1,1] -> in'
-  [1,1,0,1,0,0,1,1] -> out
+  [1,1,a,1,b,0,1,1] -> case (a, b) of
+    (1,1) -> ei
+    (1,0) -> di
+    (0,1) -> in'
+    (0,0) -> out
   _ -> nop
 
 -- | Map a 2-bit pattern to a Reg16
