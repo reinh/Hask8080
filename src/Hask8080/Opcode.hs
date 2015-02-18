@@ -36,7 +36,6 @@ interpret byte = case toBitList byte of
   [0,1,a,b,c,e,f,g] -> mov (r a b c) (r e f g)
   [0,0,a,b,c,1,0,0] -> inr (r a b c)
   [0,0,a,b,c,1,0,1] -> dcr (r a b c)
-  [0,1,a,b,c,e,f,g] -> mov (r a b c) (r e f g)
   [0,0,0,x,0,0,1,0] -> stax (r16' x)
   [0,0,0,x,1,0,1,0] -> ldax (r16' x)
   [1,0,a,b,c,d,e,f] ->
